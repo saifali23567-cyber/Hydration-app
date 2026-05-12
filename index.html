@@ -138,6 +138,20 @@ body.light #arc-bg{stroke:rgba(0,0,0,.1);}
 .interval-select{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:12px;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;}
 .settings-save{width:100%;margin-top:14px;padding:12px;border-radius:12px;border:1px solid rgba(99,179,237,.3);background:rgba(99,179,237,.08);color:var(--blue);font-family:'Syne',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
 
+/* Interval chips */
+.interval-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px;}
+.chip{padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-size:11px;font-family:'Syne',sans-serif;font-weight:600;cursor:pointer;transition:all .2s;user-select:none;}
+.chip.demo{border-color:rgba(246,173,85,.4);color:#f6ad55;}
+.chip.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+.chip.demo.active{background:#f6ad55;border-color:#f6ad55;color:#fff;}
+.demo-note{font-size:9px;color:#f6ad55;font-family:'Syne',sans-serif;margin-top:3px;display:block;}
+/* Custom message */
+.msg-textarea{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;resize:none;height:72px;transition:border-color .3s;line-height:1.5;}
+.msg-textarea:focus{border-color:var(--blue);}
+.msg-textarea::placeholder{color:var(--muted);font-style:italic;}
+.msg-preview{background:rgba(99,179,237,.07);border:1px solid rgba(99,179,237,.15);border-radius:10px;padding:9px 13px;font-size:12px;color:var(--blue);font-style:italic;margin-top:8px;display:none;text-align:center;}
+.setting-sublbl{font-size:10px;color:var(--muted);margin-bottom:6px;display:block;}
+
 /* History */
 .history-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 18px;transition:background .4s,border-color .4s;}
 .history-card h3{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--h1);margin-bottom:12px;}
@@ -269,6 +283,8 @@ body.light #arc-bg{stroke:rgba(0,0,0,.1);}
   <!-- Settings -->
   <div class="settings-card">
     <h3>⚙️ Settings</h3>
+
+    <!-- Goal -->
     <div class="setting-row">
       <span class="setting-lbl">Daily Goal (glasses)</span>
       <div class="goal-steps">
@@ -277,15 +293,29 @@ body.light #arc-bg{stroke:rgba(0,0,0,.1);}
         <button class="goal-btn" onclick="changeGoal(1)">+</button>
       </div>
     </div>
-    <div class="setting-row">
-      <span class="setting-lbl">Remind me every</span>
-      <select class="interval-select" id="interval-select">
-        <option value="30">30 min</option>
-        <option value="60" selected>60 min</option>
-        <option value="90">90 min</option>
-        <option value="120">2 hours</option>
-      </select>
+
+    <!-- Reminder interval chips -->
+    <div style="margin-bottom:14px;">
+      <span class="setting-lbl" style="display:block;margin-bottom:6px;">Remind me every</span>
+      <span class="demo-note">⚡ Demo mode: 10s / 30s — for presentations</span>
+      <div class="interval-chips" id="interval-chips">
+        <div class="chip demo active" data-val="0.167" onclick="selectChip(this)">10s</div>
+        <div class="chip demo" data-val="0.5" onclick="selectChip(this)">30s</div>
+        <div class="chip" data-val="60" onclick="selectChip(this)">60 min</div>
+        <div class="chip" data-val="30" onclick="selectChip(this)">30 min</div>
+        <div class="chip" data-val="60" onclick="selectChip(this, true)">1 hr</div>
+        <div class="chip" data-val="120" onclick="selectChip(this)">2 hr</div>
+      </div>
     </div>
+
+    <!-- Custom motivational message -->
+    <div style="margin-bottom:4px;">
+      <span class="setting-lbl" style="display:block;margin-bottom:4px;">✏️ Custom Motivational Message</span>
+      <span class="setting-sublbl">Replaces the default reminder message when shown</span>
+      <textarea class="msg-textarea" id="custom-msg" placeholder="e.g. Hey champ, drink that water! 💪" maxlength="120" oninput="previewMsg()"></textarea>
+      <div class="msg-preview" id="msg-preview">⏰ Preview: <span id="msg-preview-text"></span></div>
+    </div>
+
     <button class="settings-save" onclick="saveSettings()">💾 Save Settings</button>
   </div>
 
@@ -308,7 +338,7 @@ let state=loadState();
 function defaultState(){
   return{count:0,goal:8,tempGoal:8,streak:0,bestStreak:0,
     daysCompleted:0,lastDate:today(),history:{},goalMetToday:false,
-    lastDrinkTime:null,userName:'',reminderInterval:60};
+    lastDrinkTime:null,userName:'',reminderInterval:0.167,customMsg:''};
 }
 
 function loadState(){
@@ -319,7 +349,7 @@ function loadState(){
       const met=s.goalMetToday,ns=met?(s.streak||0)+1:0,best=Math.max(s.bestStreak||0,ns);
       return{...defaultState(),goal:s.goal,tempGoal:s.goal,streak:ns,bestStreak:best,
         daysCompleted:(s.daysCompleted||0)+(met?1:0),history:s.history||{},
-        lastDate:today(),userName:s.userName||'',reminderInterval:s.reminderInterval||60};
+        lastDate:today(),userName:s.userName||'',reminderInterval:s.reminderInterval||0.167,customMsg:s.customMsg||''};
     }
     s.tempGoal=s.goal; return s;
   }catch(e){return defaultState();}
@@ -389,7 +419,14 @@ function render(){
   for(let i=0;i<7;i++){const d=document.createElement('div');d.className='streak-dot'+(i<s?' active':'');dots.appendChild(d);}
 
   document.getElementById('goal-input-val').textContent=state.tempGoal;
-  document.getElementById('interval-select').value=state.reminderInterval||60;
+  // Set active chip
+  document.querySelectorAll('.chip').forEach(c=>{
+    c.classList.remove('active');
+    if(parseFloat(c.dataset.val)===state.reminderInterval) c.classList.add('active');
+  });
+  // Custom message
+  const cmEl=document.getElementById('custom-msg');
+  if(cmEl&&state.customMsg) cmEl.value=state.customMsg;
 
   const now=new Date();
   document.getElementById('date-badge').textContent=DAYS[now.getDay()]+', '+now.toLocaleDateString('en-US',{month:'short',day:'numeric'});
@@ -477,10 +514,50 @@ function undoWater(){
 
 function changeGoal(d){state.tempGoal=Math.max(1,Math.min(20,state.tempGoal+d));document.getElementById('goal-input-val').textContent=state.tempGoal;}
 
+function selectChip(el, skipDupe){
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function previewMsg(){
+  const val=document.getElementById('custom-msg').value.trim();
+  const prev=document.getElementById('msg-preview');
+  const prevText=document.getElementById('msg-preview-text');
+  if(val){prev.style.display='block';prevText.textContent=val;}
+  else{prev.style.display='none';}
+}
+
 function saveSettings(){
   state.goal=state.tempGoal;
-  state.reminderInterval=parseInt(document.getElementById('interval-select').value)||60;
+  // Get selected chip value
+  const active=document.querySelector('.chip.active');
+  state.reminderInterval=active?parseFloat(active.dataset.val):0.167;
+  // Custom message
+  state.customMsg=document.getElementById('custom-msg').value.trim();
+  // Restart reminder timer with new interval
+  clearInterval(reminderTimer);
+  reminderTimer=setInterval(checkReminder,5000);
   saveState();render();showToast('✅ Settings saved!');
+}
+
+// ── Sound ──
+function playReminderSound(urgent=false){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const times=urgent?[0,0.15,0.3]:[0,0.2]; // urgent = 3 beeps, normal = 2
+    times.forEach(delay=>{
+      const osc=ctx.createOscillator();
+      const gain=ctx.createGain();
+      osc.connect(gain);gain.connect(ctx.destination);
+      osc.type='sine';
+      osc.frequency.setValueAtTime(urgent?880:660,ctx.currentTime+delay);
+      gain.gain.setValueAtTime(0,ctx.currentTime+delay);
+      gain.gain.linearRampToValueAtTime(0.4,ctx.currentTime+delay+0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+delay+0.25);
+      osc.start(ctx.currentTime+delay);
+      osc.stop(ctx.currentTime+delay+0.3);
+    });
+  }catch(e){}
 }
 
 // ── Reminder ──
@@ -488,17 +565,27 @@ function checkReminder(){
   const card=document.getElementById('reminder-card');
   if(!state.lastDrinkTime){card.style.display='none';return;}
   const mins=(Date.now()-state.lastDrinkTime)/60000;
-  const interval=state.reminderInterval||60;
+  const interval=state.reminderInterval||0.167; // in minutes
   if(mins>interval&&state.count<state.goal){
+    const wasHidden=card.style.display==='none';
     card.style.display='flex';
     const urgent=mins>interval*1.5;
     card.className='reminder-card'+(urgent?' urgent':'');
-    document.getElementById('reminder-title').textContent=urgent?'⚠️ Seriously, drink water now!':'⏰ Time to hydrate!';
-    document.getElementById('reminder-sub').textContent='No water logged in '+Math.round(mins)+' min';
+    if(wasHidden) playReminderSound(urgent); // only beep when first appearing
+    // Use custom message if set
+    const customMsg=state.customMsg||'';
+    if(customMsg){
+      document.getElementById('reminder-title').textContent='⏰ '+customMsg;
+      document.getElementById('reminder-sub').textContent='Your personal reminder';
+    } else {
+      document.getElementById('reminder-title').textContent=urgent?'⚠️ Seriously, drink water now!':'⏰ Time to hydrate!';
+      const elapsed=mins<1?Math.round(mins*60)+' sec':Math.round(mins)+' min';
+      document.getElementById('reminder-sub').textContent='No water logged in '+elapsed;
+    }
     document.title=urgent?'⚠️ Drink Water Now! 💧':'⏰ Time to Hydrate! 💧';
   }else{card.style.display='none';document.title='💧 Hydration Booster';}
 }
-setInterval(checkReminder,30000);
+let reminderTimer=setInterval(checkReminder,5000);
 
 // ── Confetti ──
 function confetti(){
