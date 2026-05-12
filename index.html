@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<title>💧 Hydration Booster</title>
+
+<!-- PWA -->
+<link rel="manifest" href="./manifest.json"/>
+<meta name="theme-color" content="#63b3ed"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Hydration Booster"/>
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:#0a0f1e; --card:#111827; --card2:#0d1525;
+  --border:rgba(99,179,237,0.12); --blue:#63b3ed; --cyan:#4fd1c5;
+  --text:#e2e8f0; --muted:#718096; --streak:#f6ad55;
+  --success:#68d391; --warn:#fc8181; --h1:#fff;
+}
+body.light {
+  --bg:#eef4fb; --card:#fff; --card2:#f0f6ff;
+  --border:rgba(66,153,225,0.18); --blue:#2b6cb0; --cyan:#2c7a7b;
+  --text:#1a202c; --muted:#718096; --streak:#c05621;
+  --success:#276749; --warn:#c53030; --h1:#1a202c;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overscroll-behavior:none;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;transition:background .4s,color .4s;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 20% 20%,rgba(99,179,237,.07) 0%,transparent 60%),radial-gradient(ellipse 50% 50% at 80% 80%,rgba(79,209,197,.05) 0%,transparent 60%);pointer-events:none;z-index:0;}
+body.light::before{background:radial-gradient(ellipse 60% 40% at 20% 20%,rgba(66,153,225,.08) 0%,transparent 60%),radial-gradient(ellipse 50% 50% at 80% 80%,rgba(79,209,197,.06) 0%,transparent 60%);}
+
+.app{position:relative;z-index:1;max-width:430px;margin:0 auto;padding:48px 18px 80px;display:flex;flex-direction:column;gap:16px;}
+
+/* Header */
+.header{display:flex;justify-content:space-between;align-items:flex-start;}
+.header-left h1{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px;color:var(--h1);}
+.header-left p{font-size:12px;color:var(--muted);margin-top:2px;}
+.header-right{display:flex;align-items:center;gap:8px;}
+.date-badge{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:11px;color:var(--muted);font-family:'Syne',sans-serif;transition:background .4s,border-color .4s;}
+.theme-toggle{background:var(--card);border:1px solid var(--border);border-radius:50px;padding:4px;cursor:pointer;display:flex;align-items:center;gap:2px;transition:background .4s,border-color .4s;}
+.t-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;transition:background .3s;}
+.t-icon.active{background:var(--blue);}
+body.light .t-icon.active{background:#bee3f8;}
+
+/* Onboarding */
+.onboard{background:linear-gradient(135deg,rgba(99,179,237,.12),rgba(79,209,197,.06));border:1px solid rgba(99,179,237,.2);border-radius:16px;padding:16px 18px;}
+.onboard h3{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--h1);margin-bottom:10px;}
+.onboard-row{display:flex;gap:10px;align-items:center;}
+.onboard input{flex:1;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .3s;}
+.onboard input:focus{border-color:var(--blue);}
+.onboard-save{background:linear-gradient(135deg,#4299e1,#63b3ed);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
+
+/* Greeting */
+.greeting{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--h1);padding:2px 0;}
+
+/* Streak */
+.streak-bar{background:linear-gradient(135deg,rgba(246,173,85,.12),rgba(246,173,85,.04));border:1px solid rgba(246,173,85,.25);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;}
+.streak-icon{font-size:26px;line-height:1;}
+.streak-text strong{display:block;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--streak);}
+.streak-text span{font-size:11px;color:var(--muted);}
+.streak-days{margin-left:auto;display:flex;gap:5px;}
+.streak-dot{width:9px;height:9px;border-radius:50%;background:rgba(246,173,85,.2);border:1px solid rgba(246,173,85,.3);transition:all .3s;}
+.streak-dot.active{background:var(--streak);border-color:var(--streak);box-shadow:0 0 6px rgba(246,173,85,.6);}
+
+/* Reminder */
+.reminder-card{background:linear-gradient(135deg,rgba(252,129,74,.08),rgba(246,173,85,.05));border:1px solid rgba(252,129,74,.2);border-radius:14px;padding:13px 16px;display:none;align-items:center;gap:12px;}
+.reminder-card.urgent{border-color:rgba(252,129,74,.6);background:rgba(252,129,74,.12);}
+.reminder-icon{font-size:22px;}
+.reminder-text strong{display:block;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#f6ad55;}
+.reminder-text span{font-size:11px;color:var(--muted);}
+
+/* Water card */
+.water-card{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:26px 22px;text-align:center;position:relative;overflow:hidden;transition:background .4s,border-color .4s;}
+.water-card::before{content:'';position:absolute;bottom:0;left:0;right:0;height:var(--fill,0%);background:linear-gradient(0deg,rgba(99,179,237,.12) 0%,transparent 100%);transition:height .6s cubic-bezier(.34,1.56,.64,1);pointer-events:none;}
+.goal-display{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;font-family:'Syne',sans-serif;margin-bottom:6px;}
+.counter-wrap{display:inline-flex;align-items:baseline;gap:4px;margin:6px 0;}
+.counter-num{font-family:'Syne',sans-serif;font-size:80px;font-weight:800;line-height:1;color:var(--blue);text-shadow:0 0 40px rgba(99,179,237,.4);transition:color .4s;}
+.counter-num.bump{animation:bump .3s ease;}
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.14)}100%{transform:scale(1)}}
+.counter-denom{font-family:'Syne',sans-serif;font-size:28px;font-weight:600;color:var(--muted);align-self:flex-end;padding-bottom:12px;}
+.unit-label{font-size:11px;color:var(--muted);margin-bottom:18px;}
+
+/* Arc */
+.arc-wrap{position:relative;width:140px;height:70px;margin:0 auto 18px;overflow:hidden;}
+.arc-wrap svg{overflow:visible;}
+#arc-bg{stroke:rgba(255,255,255,.06);}
+body.light #arc-bg{stroke:rgba(0,0,0,.1);}
+#arc-fill{stroke:var(--blue);stroke-linecap:round;filter:drop-shadow(0 0 6px rgba(99,179,237,.7));transition:stroke-dashoffset .6s cubic-bezier(.34,1.56,.64,1),stroke .4s;}
+.arc-pct{position:absolute;bottom:0;left:50%;transform:translateX(-50%);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--blue);}
+
+/* Feedback */
+.feedback-msg{background:rgba(99,179,237,.07);border:1px solid rgba(99,179,237,.15);border-radius:10px;padding:10px 13px;font-size:13px;color:var(--blue);min-height:40px;display:flex;align-items:center;justify-content:center;transition:all .4s;font-style:italic;text-align:center;}
+
+/* Drink btn */
+.drink-btn{width:100%;margin-top:20px;padding:18px;border-radius:16px;border:none;background:linear-gradient(135deg,#4299e1,#63b3ed);color:#fff;font-family:'Syne',sans-serif;font-size:16px;font-weight:700;cursor:pointer;position:relative;overflow:hidden;transition:transform .15s,box-shadow .3s;box-shadow:0 8px 30px rgba(66,153,225,.3);}
+.drink-btn:active{transform:scale(.96);}
+.drink-btn.success{background:linear-gradient(135deg,#38a169,#68d391);box-shadow:0 8px 30px rgba(56,161,105,.35);}
+.ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.3);transform:scale(0);animation:ripple .5s linear;pointer-events:none;}
+@keyframes ripple{to{transform:scale(4);opacity:0;}}
+
+/* Undo */
+.undo-btn{background:none;border:1px solid var(--border);border-radius:10px;padding:9px 14px;color:var(--muted);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;width:100%;margin-top:-4px;}
+.undo-btn:active{border-color:var(--warn);color:var(--warn);}
+
+/* Stats */
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 10px;text-align:center;transition:background .4s,border-color .4s;}
+.stat-icon{font-size:18px;margin-bottom:5px;}
+.stat-val{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--h1);}
+.stat-lbl{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.3;}
+
+/* Insights */
+.insight-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 18px;transition:background .4s,border-color .4s;}
+.insight-card h3{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--h1);margin-bottom:12px;}
+.insight-row{display:flex;justify-content:space-between;margin-bottom:10px;}
+.insight-item{text-align:center;flex:1;}
+.insight-val{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--blue);}
+.insight-lbl{font-size:10px;color:var(--muted);margin-top:2px;}
+.trend{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-block;}
+.trend.up{color:#68d391;background:rgba(104,211,145,.12);}
+.trend.down{color:#fc8181;background:rgba(252,129,74,.12);}
+.trend.flat{color:var(--muted);background:rgba(113,128,150,.1);}
+
+/* Settings */
+.settings-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 18px;transition:background .4s,border-color .4s;}
+.settings-card h3{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--h1);margin-bottom:14px;}
+.setting-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.setting-row:last-of-type{margin-bottom:0;}
+.setting-lbl{font-size:12px;color:var(--muted);}
+.goal-steps{display:flex;align-items:center;gap:10px;}
+.goal-btn{width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.goal-btn:active{border-color:var(--blue);color:var(--blue);}
+.goal-val{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--blue);min-width:32px;text-align:center;}
+.interval-select{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:12px;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;}
+.settings-save{width:100%;margin-top:14px;padding:12px;border-radius:12px;border:1px solid rgba(99,179,237,.3);background:rgba(99,179,237,.08);color:var(--blue);font-family:'Syne',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
+
+/* History */
+.history-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 18px;transition:background .4s,border-color .4s;}
+.history-card h3{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--h1);margin-bottom:12px;}
+.history-bars{display:flex;align-items:flex-end;gap:7px;height:64px;}
+.h-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;}
+.h-bar{width:100%;border-radius:5px 5px 0 0;background:rgba(99,179,237,.18);border:1px solid rgba(99,179,237,.12);transition:height .5s ease;min-height:4px;}
+.h-bar.full{background:rgba(99,179,237,.5);border-color:var(--blue);}
+.h-day{font-size:9px;color:var(--muted);font-family:'Syne',sans-serif;}
+
+/* Confetti + Toast */
+.confetti-wrap{position:fixed;inset:0;pointer-events:none;z-index:100;}
+.confetti-piece{position:absolute;width:8px;height:8px;border-radius:2px;animation:fall 1.5s ease-in forwards;}
+@keyframes fall{0%{transform:translateY(-20px) rotate(0deg);opacity:1;}100%{transform:translateY(100vh) rotate(720deg);opacity:0;}}
+.toast{position:fixed;bottom:40px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 20px;font-size:13px;font-family:'Syne',sans-serif;color:var(--text);transition:transform .4s cubic-bezier(.34,1.56,.64,1);z-index:200;white-space:nowrap;box-shadow:0 8px 30px rgba(0,0,0,.3);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <h1>💧 Hydration Booster</h1>
+      <p>Stay hydrated. Stay focused.</p>
+    </div>
+    <div class="header-right">
+      <div class="date-badge" id="date-badge">—</div>
+      <button class="theme-toggle" onclick="toggleTheme()">
+        <div class="t-icon" id="dark-icon">🌙</div>
+        <div class="t-icon" id="light-icon">☀️</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Onboarding -->
+  <div class="onboard" id="onboard">
+    <h3>👋 Welcome! What's your name?</h3>
+    <div class="onboard-row">
+      <input id="name-input" type="text" placeholder="Enter your name..." maxlength="20"/>
+      <button class="onboard-save" onclick="saveName()">Let's go →</button>
+    </div>
+  </div>
+
+  <!-- Greeting -->
+  <div class="greeting" id="greeting" style="display:none">
+    Good <span id="time-of-day">day</span>, <span id="user-name-display" style="color:var(--blue)">there</span>! 👋
+  </div>
+
+  <!-- Streak -->
+  <div class="streak-bar">
+    <div class="streak-icon">🔥</div>
+    <div class="streak-text">
+      <strong id="streak-label">0 Day Streak</strong>
+      <span id="streak-sub">Keep it going!</span>
+    </div>
+    <div class="streak-days" id="streak-dots"></div>
+  </div>
+
+  <!-- Reminder -->
+  <div class="reminder-card" id="reminder-card">
+    <div class="reminder-icon">⏰</div>
+    <div class="reminder-text">
+      <strong id="reminder-title">Time to hydrate!</strong>
+      <span id="reminder-sub">You haven't logged water in a while</span>
+    </div>
+  </div>
+
+  <!-- Water Card -->
+  <div class="water-card" id="water-card">
+    <div class="goal-display">DAILY GOAL</div>
+    <div class="counter-wrap">
+      <div class="counter-num" id="counter">0</div>
+      <div class="counter-denom">/<span id="goal-denom">8</span></div>
+    </div>
+    <div class="unit-label">glasses of water</div>
+    <div class="arc-wrap">
+      <svg width="140" height="70" viewBox="0 0 140 70">
+        <path id="arc-bg" d="M5,70 A65,65 0 0,1 135,70" fill="none" stroke-width="9"/>
+        <path id="arc-fill" d="M5,70 A65,65 0 0,1 135,70" fill="none" stroke-width="9" stroke-dasharray="204" stroke-dashoffset="204"/>
+      </svg>
+      <div class="arc-pct" id="arc-pct">0%</div>
+    </div>
+    <div class="feedback-msg" id="feedback-msg">🌊 Start your day — drink your first glass!</div>
+    <button class="drink-btn" id="drink-btn" onclick="drinkWater(event)">💧 Drink Water</button>
+  </div>
+
+  <button class="undo-btn" onclick="undoWater()">↩ Undo last glass</button>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-icon">🔥</div>
+      <div class="stat-val" id="stat-streak">0</div>
+      <div class="stat-lbl">Current Streak</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🏆</div>
+      <div class="stat-val" id="best-streak">0</div>
+      <div class="stat-lbl">Best Streak</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📅</div>
+      <div class="stat-val" id="days-completed">0</div>
+      <div class="stat-lbl">Goals Met</div>
+    </div>
+  </div>
+
+  <!-- Weekly Insights -->
+  <div class="insight-card">
+    <h3>📊 Weekly Insights</h3>
+    <div class="insight-row">
+      <div class="insight-item">
+        <div class="insight-val" id="weekly-rate">—</div>
+        <div class="insight-lbl">Completion Rate</div>
+      </div>
+      <div class="insight-item">
+        <div class="insight-val" id="avg-intake">—</div>
+        <div class="insight-lbl">Avg Daily</div>
+      </div>
+      <div class="insight-item">
+        <div class="insight-val" id="best-week">—</div>
+        <div class="insight-lbl">Best Day</div>
+      </div>
+    </div>
+    <span class="trend flat" id="trend-badge">no data yet</span>
+  </div>
+
+  <!-- Settings -->
+  <div class="settings-card">
+    <h3>⚙️ Settings</h3>
+    <div class="setting-row">
+      <span class="setting-lbl">Daily Goal (glasses)</span>
+      <div class="goal-steps">
+        <button class="goal-btn" onclick="changeGoal(-1)">−</button>
+        <div class="goal-val" id="goal-input-val">8</div>
+        <button class="goal-btn" onclick="changeGoal(1)">+</button>
+      </div>
+    </div>
+    <div class="setting-row">
+      <span class="setting-lbl">Remind me every</span>
+      <select class="interval-select" id="interval-select">
+        <option value="30">30 min</option>
+        <option value="60" selected>60 min</option>
+        <option value="90">90 min</option>
+        <option value="120">2 hours</option>
+      </select>
+    </div>
+    <button class="settings-save" onclick="saveSettings()">💾 Save Settings</button>
+  </div>
+
+  <!-- History -->
+  <div class="history-card">
+    <h3>📅 This Week</h3>
+    <div class="history-bars" id="history-bars"></div>
+  </div>
+
+</div>
+
+<div class="confetti-wrap" id="confetti-wrap"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+let state=loadState();
+
+function defaultState(){
+  return{count:0,goal:8,tempGoal:8,streak:0,bestStreak:0,
+    daysCompleted:0,lastDate:today(),history:{},goalMetToday:false,
+    lastDrinkTime:null,userName:'',reminderInterval:60};
+}
+
+function loadState(){
+  try{
+    const s=JSON.parse(localStorage.getItem('hb_v3')||'null');
+    if(!s)return defaultState();
+    if(s.lastDate!==today()){
+      const met=s.goalMetToday,ns=met?(s.streak||0)+1:0,best=Math.max(s.bestStreak||0,ns);
+      return{...defaultState(),goal:s.goal,tempGoal:s.goal,streak:ns,bestStreak:best,
+        daysCompleted:(s.daysCompleted||0)+(met?1:0),history:s.history||{},
+        lastDate:today(),userName:s.userName||'',reminderInterval:s.reminderInterval||60};
+    }
+    s.tempGoal=s.goal; return s;
+  }catch(e){return defaultState();}
+}
+
+function saveState(){
+  state.history[today()]={count:state.count,goal:state.goal};
+  localStorage.setItem('hb_v3',JSON.stringify(state));
+}
+
+function today(){return new Date().toISOString().split('T')[0];}
+
+// ── Name ──
+function saveName(){
+  const v=document.getElementById('name-input').value.trim();
+  if(!v)return;
+  state.userName=v; saveState(); renderName();
+  showToast('👋 Welcome, '+v+'!');
+}
+
+function renderName(){
+  const ob=document.getElementById('onboard'),gr=document.getElementById('greeting');
+  if(state.userName){
+    ob.style.display='none'; gr.style.display='block';
+    document.getElementById('user-name-display').textContent=state.userName;
+    const h=new Date().getHours();
+    document.getElementById('time-of-day').textContent=h<12?'morning':h<17?'afternoon':'evening';
+  }else{ob.style.display='block';gr.style.display='none';}
+}
+
+// ── Render ──
+function render(){
+  const pct=Math.min(state.count/state.goal,1);
+  document.getElementById('counter').textContent=state.count;
+  document.getElementById('goal-denom').textContent=state.goal;
+  document.getElementById('water-card').style.setProperty('--fill',(pct*55)+'%');
+
+  const arcLen=204,offset=arcLen-(arcLen*pct);
+  const arc=document.getElementById('arc-fill');
+  arc.style.strokeDashoffset=offset;
+  arc.style.stroke=pct>=1?'#68d391':pct>=.5?'#63b3ed':'#fc8181';
+  document.getElementById('arc-pct').textContent=Math.round(pct*100)+'%';
+
+  const fb=document.getElementById('feedback-msg');
+  const name=state.userName?state.userName.split(' ')[0]:'';
+  const hey=name?name+', ':'';
+  if(pct===0){fb.textContent='🌊 '+hey+'Start your day — drink your first glass!';fb.style.color='var(--blue)';}
+  else if(pct<.3){fb.textContent='💪 Good start! Keep the momentum going.';fb.style.color='#fc8181';}
+  else if(pct<.5){fb.textContent='⚡ '+hey+'you\'re building a great habit!';fb.style.color='#f6ad55';}
+  else if(pct<.75){fb.textContent='🎯 Halfway there — '+hey+'you\'re crushing it!';fb.style.color='var(--blue)';}
+  else if(pct<1){fb.textContent='🌟 Almost there, '+hey+'just a few more glasses!';fb.style.color='var(--cyan)';}
+  else{fb.textContent='🏆 Goal reached! '+hey+'You\'re fully hydrated today!';fb.style.color='var(--success)';}
+
+  const btn=document.getElementById('drink-btn');
+  if(pct>=1){btn.textContent='✅ Goal Complete!';btn.classList.add('success');}
+  else{btn.textContent='💧 Drink Water';btn.classList.remove('success');}
+
+  const s=state.streak;
+  document.getElementById('streak-label').textContent=s+' Day Streak';
+  document.getElementById('streak-sub').textContent=s>=7?'🔥 One full week!':s>=3?'Great momentum!':'Keep it going!';
+  document.getElementById('stat-streak').textContent=s;
+  document.getElementById('best-streak').textContent=state.bestStreak;
+  document.getElementById('days-completed').textContent=state.daysCompleted;
+
+  const dots=document.getElementById('streak-dots');
+  dots.innerHTML='';
+  for(let i=0;i<7;i++){const d=document.createElement('div');d.className='streak-dot'+(i<s?' active':'');dots.appendChild(d);}
+
+  document.getElementById('goal-input-val').textContent=state.tempGoal;
+  document.getElementById('interval-select').value=state.reminderInterval||60;
+
+  const now=new Date();
+  document.getElementById('date-badge').textContent=DAYS[now.getDay()]+', '+now.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+
+  renderHistory(); renderInsights(); checkReminder(); renderName();
+}
+
+function renderHistory(){
+  const wrap=document.getElementById('history-bars');
+  wrap.innerHTML='';
+  for(let i=6;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const key=d.toISOString().split('T')[0];
+    const rec=state.history[key]||(key===today()?{count:state.count,goal:state.goal}:null);
+    const pct=rec?Math.min(rec.count/(rec.goal||state.goal),1):0;
+    const w=document.createElement('div');w.className='h-bar-wrap';
+    const bar=document.createElement('div');bar.className='h-bar'+(pct>=1?' full':'');
+    bar.style.height=Math.max(pct*50,4)+'px';
+    const lbl=document.createElement('div');lbl.className='h-day';lbl.textContent=DAYS[d.getDay()];
+    w.appendChild(bar);w.appendChild(lbl);wrap.appendChild(w);
+  }
+}
+
+function renderInsights(){
+  const tw=[],lw=[];
+  for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);tw.push(d.toISOString().split('T')[0]);}
+  for(let i=13;i>=7;i--){const d=new Date();d.setDate(d.getDate()-i);lw.push(d.toISOString().split('T')[0]);}
+
+  const thisWeek=tw.map(k=>{
+    const r=state.history[k]||(k===today()?{count:state.count,goal:state.goal}:null);
+    return r?{pct:Math.min(r.count/(r.goal||state.goal),1),count:r.count}:null;
+  }).filter(Boolean);
+
+  const lastWeek=lw.map(k=>{const r=state.history[k];return r?Math.min(r.count/(r.goal||state.goal),1):null;}).filter(x=>x!==null);
+
+  if(!thisWeek.length){
+    ['weekly-rate','avg-intake','best-week'].forEach(id=>document.getElementById(id).textContent='—');
+    const tb=document.getElementById('trend-badge');tb.textContent='no data yet';tb.className='trend flat';
+    return;
+  }
+
+  const rate=Math.round((thisWeek.filter(d=>d.pct>=1).length/thisWeek.length)*100);
+  const avg=(thisWeek.reduce((s,d)=>s+d.count,0)/thisWeek.length).toFixed(1);
+  const best=Math.max(...thisWeek.map(d=>d.count));
+  document.getElementById('weekly-rate').textContent=rate+'%';
+  document.getElementById('avg-intake').textContent=avg+' gl';
+  document.getElementById('best-week').textContent=best+' gl';
+
+  const tb=document.getElementById('trend-badge');
+  if(!lastWeek.length){tb.textContent='not enough data';tb.className='trend flat';}
+  else{
+    const diff=Math.round(((thisWeek.filter(d=>d.pct>=1).length/thisWeek.length)-(lastWeek.filter(d=>d>=1).length/lastWeek.length))*100);
+    if(diff>0){tb.textContent='↑ +'+diff+'% vs last week';tb.className='trend up';}
+    else if(diff<0){tb.textContent='↓ '+diff+'% vs last week';tb.className='trend down';}
+    else{tb.textContent='→ Same as last week';tb.className='trend flat';}
+  }
+}
+
+// ── Actions ──
+function drinkWater(e){
+  if(state.count>=state.goal*2)return;
+  state.count++;state.lastDrinkTime=Date.now();
+  const num=document.getElementById('counter');
+  num.classList.remove('bump');void num.offsetWidth;num.classList.add('bump');
+  const btn=document.getElementById('drink-btn');
+  const r=document.createElement('span');r.className='ripple';
+  const rect=btn.getBoundingClientRect(),size=Math.max(rect.width,rect.height);
+  r.style.cssText=`width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px`;
+  btn.appendChild(r);setTimeout(()=>r.remove(),600);
+  if(state.count===state.goal&&!state.goalMetToday){
+    state.goalMetToday=true;state.streak++;
+    state.bestStreak=Math.max(state.bestStreak,state.streak);state.daysCompleted++;
+    setTimeout(()=>{confetti();showToast('🏆 Goal reached! Streak: '+state.streak+' days');},300);
+  }
+  saveState();render();
+}
+
+function undoWater(){
+  if(state.count<=0)return;state.count--;
+  if(state.goalMetToday&&state.count<state.goal){
+    state.goalMetToday=false;state.streak=Math.max(0,state.streak-1);state.daysCompleted=Math.max(0,state.daysCompleted-1);
+  }
+  saveState();render();showToast('↩ Removed one glass');
+}
+
+function changeGoal(d){state.tempGoal=Math.max(1,Math.min(20,state.tempGoal+d));document.getElementById('goal-input-val').textContent=state.tempGoal;}
+
+function saveSettings(){
+  state.goal=state.tempGoal;
+  state.reminderInterval=parseInt(document.getElementById('interval-select').value)||60;
+  saveState();render();showToast('✅ Settings saved!');
+}
+
+// ── Reminder ──
+function checkReminder(){
+  const card=document.getElementById('reminder-card');
+  if(!state.lastDrinkTime){card.style.display='none';return;}
+  const mins=(Date.now()-state.lastDrinkTime)/60000;
+  const interval=state.reminderInterval||60;
+  if(mins>interval&&state.count<state.goal){
+    card.style.display='flex';
+    const urgent=mins>interval*1.5;
+    card.className='reminder-card'+(urgent?' urgent':'');
+    document.getElementById('reminder-title').textContent=urgent?'⚠️ Seriously, drink water now!':'⏰ Time to hydrate!';
+    document.getElementById('reminder-sub').textContent='No water logged in '+Math.round(mins)+' min';
+    document.title=urgent?'⚠️ Drink Water Now! 💧':'⏰ Time to Hydrate! 💧';
+  }else{card.style.display='none';document.title='💧 Hydration Booster';}
+}
+setInterval(checkReminder,30000);
+
+// ── Confetti ──
+function confetti(){
+  const wrap=document.getElementById('confetti-wrap');
+  const colors=['#63b3ed','#4fd1c5','#68d391','#f6ad55','#fc8181','#b794f4'];
+  for(let i=0;i<40;i++){
+    const p=document.createElement('div');p.className='confetti-piece';
+    p.style.cssText=`left:${Math.random()*100}%;top:0;background:${colors[Math.floor(Math.random()*colors.length)]};animation-delay:${Math.random()*.8}s;animation-duration:${1+Math.random()}s;transform:rotate(${Math.random()*360}deg)`;
+    wrap.appendChild(p);setTimeout(()=>p.remove(),2500);
+  }
+}
+
+// ── Toast ──
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+// ── Theme ──
+function toggleTheme(){const l=document.body.classList.toggle('light');localStorage.setItem('hb_theme',l?'light':'dark');updateToggle(l);}
+function updateToggle(l){document.getElementById('dark-icon').classList.toggle('active',!l);document.getElementById('light-icon').classList.toggle('active',l);}
+function initTheme(){const l=localStorage.getItem('hb_theme')==='light';if(l)document.body.classList.add('light');updateToggle(l);}
+
+// ── Service Worker ──
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
+  });
+}
+
+initTheme();render();
+</script>
+</body>
+</html>
