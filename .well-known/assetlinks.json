@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.saifali23567_cyber.twa",
+        "sha256_cert_fingerprints": ["05:63:1F:08:8E:4B:A4:31:70:FE:22:C8:5A:B6:16:4A:77:C2:A8:6F:E2:FB:A1:4F:04:AC:A2:38:9E:D4:F5:E6"]
+      }
+    }]
