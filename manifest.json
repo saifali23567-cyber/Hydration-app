@@ -1,0 +1,22 @@
+{
+  "name": "Hydration Booster",
+  "short_name": "Hydration",
+  "description": "Track your daily water intake and build healthy hydration habits.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0f1e",
+  "theme_color": "#63b3ed",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192x192/63b3ed/ffffff?text=💧",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512/63b3ed/ffffff?text=💧",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
