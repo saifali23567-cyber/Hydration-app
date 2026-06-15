@@ -297,7 +297,7 @@ body.light #arc-bg{stroke:rgba(0,0,0,.1);}
     <!-- Reminder interval chips -->
     <div style="margin-bottom:14px;">
       <span class="setting-lbl" style="display:block;margin-bottom:6px;">Remind me every</span>
-     <!-- <span class="demo-note">⚡ Demo mode: 10s / 30s — for presentations</span> -->
+      <span class="demo-note">⚡ Demo mode: 10s / 30s — for presentations</span>
       <div class="interval-chips" id="interval-chips">
         <div class="chip demo active" data-val="0.167" onclick="selectChip(this)">10s</div>
         <div class="chip demo" data-val="0.5" onclick="selectChip(this)">30s</div>
@@ -489,6 +489,7 @@ function renderInsights(){
 function drinkWater(e){
   if(state.count>=state.goal*2)return;
   state.count++;state.lastDrinkTime=Date.now();
+  stopReminderSound(); // Stop continuous beeping when user drinks
   const num=document.getElementById('counter');
   num.classList.remove('bump');void num.offsetWidth;num.classList.add('bump');
   const btn=document.getElementById('drink-btn');
@@ -529,50 +530,92 @@ function previewMsg(){
 
 function saveSettings(){
   state.goal=state.tempGoal;
-  // Get selected chip value
   const active=document.querySelector('.chip.active');
   state.reminderInterval=active?parseFloat(active.dataset.val):0.167;
-  // Custom message
   state.customMsg=document.getElementById('custom-msg').value.trim();
-  // Restart reminder timer with new interval
   clearInterval(reminderTimer);
   reminderTimer=setInterval(checkReminder,5000);
   saveState();render();showToast('✅ Settings saved!');
 }
 
-// ── Sound ──
+// ── SOUND: CONTINUOUS LOOPING (FIXED) ──
+let soundLoopTimeout = null;
+let soundActive = false;
+
 function playReminderSound(urgent=false){
   try{
-    const ctx=new(window.AudioContext||window.webkitAudioContext)();
-    const times=urgent?[0,0.15,0.3]:[0,0.2]; // urgent = 3 beeps, normal = 2
-    times.forEach(delay=>{
-      const osc=ctx.createOscillator();
-      const gain=ctx.createGain();
-      osc.connect(gain);gain.connect(ctx.destination);
-      osc.type='sine';
-      osc.frequency.setValueAtTime(urgent?880:660,ctx.currentTime+delay);
-      gain.gain.setValueAtTime(0,ctx.currentTime+delay);
-      gain.gain.linearRampToValueAtTime(0.4,ctx.currentTime+delay+0.01);
-      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+delay+0.25);
-      osc.start(ctx.currentTime+delay);
-      osc.stop(ctx.currentTime+delay+0.3);
-    });
-  }catch(e){}
+    // Stop any existing sound loop
+    if (soundLoopTimeout) {
+      clearTimeout(soundLoopTimeout);
+      soundLoopTimeout = null;
+    }
+    soundActive = true;
+    
+    // Recursive beep function that schedules next beep
+    function scheduleBeep() {
+      if (!soundActive) return;
+      
+      // Check if reminder is still visible and goal not reached
+      const card = document.getElementById('reminder-card');
+      if (!card || card.style.display === 'none' || state.count >= state.goal) {
+        stopReminderSound();
+        return;
+      }
+      
+      // Play beep
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      ctx.resume().then(() => {
+        const times = urgent ? [0, 0.15, 0.3] : [0, 0.2];
+        times.forEach(delay => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(urgent ? 1046 : 880, ctx.currentTime + delay);
+          gain.gain.setValueAtTime(0, ctx.currentTime + delay);
+          gain.gain.linearRampToValueAtTime(2.0, ctx.currentTime + delay + 0.01);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.25);
+          osc.start(ctx.currentTime + delay);
+          osc.stop(ctx.currentTime + delay + 0.25);
+        });
+        // Clean up context after short delay
+        setTimeout(() => ctx.close().catch(()=>{}), 500);
+      }).catch(() => {});
+      
+      // Schedule next beep in 2 seconds (continuous loop)
+      soundLoopTimeout = setTimeout(scheduleBeep, 2000);
+    }
+    
+    // Start the beep loop
+    scheduleBeep();
+    
+  } catch(e) {
+    console.warn("Sound error:", e);
+    soundActive = false;
+  }
+}
+
+function stopReminderSound() {
+  soundActive = false;
+  if (soundLoopTimeout) {
+    clearTimeout(soundLoopTimeout);
+    soundLoopTimeout = null;
+  }
 }
 
 // ── Reminder ──
 function checkReminder(){
   const card=document.getElementById('reminder-card');
-  if(!state.lastDrinkTime){card.style.display='none';return;}
+  if(!state.lastDrinkTime){card.style.display='none';stopReminderSound();return;}
   const mins=(Date.now()-state.lastDrinkTime)/60000;
-  const interval=state.reminderInterval||0.167; // in minutes
+  const interval=state.reminderInterval||0.167;
   if(mins>interval&&state.count<state.goal){
     const wasHidden=card.style.display==='none';
     card.style.display='flex';
     const urgent=mins>interval*1.5;
     card.className='reminder-card'+(urgent?' urgent':'');
-    if(wasHidden) playReminderSound(urgent); // only beep when first appearing
-    // Use custom message if set
+    if(wasHidden) playReminderSound(urgent);
     const customMsg=state.customMsg||'';
     if(customMsg){
       document.getElementById('reminder-title').textContent='⏰ '+customMsg;
@@ -583,7 +626,11 @@ function checkReminder(){
       document.getElementById('reminder-sub').textContent='No water logged in '+elapsed;
     }
     document.title=urgent?'⚠️ Drink Water Now! 💧':'⏰ Time to Hydrate! 💧';
-  }else{card.style.display='none';document.title='💧 Hydration Booster';}
+  }else{
+    card.style.display='none';
+    stopReminderSound();
+    document.title='💧 Hydration Booster';
+  }
 }
 let reminderTimer=setInterval(checkReminder,5000);
 
@@ -617,3 +664,4 @@ initTheme();render();
 </script>
 </body>
 </html>
+```
